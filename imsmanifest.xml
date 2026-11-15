@@ -22,11 +22,11 @@
   <resources>
     <resource identifier="RES-1" type="webcontent" adlcp:scormtype="sco" href="index.html">
       <file href="index.html"/>
+      <file href="brand/afc-logo-dark-green-800.png"/>
       <file href="brand/afc27-start-picture.jpg"/>
-      <file href="brand/fonts/ArchivoNarrow[wght].ttf"/>
-      <file href="brand/fonts/SourceSans3[wght].ttf"/>
-      <file href="brand/jam-training-primary.png"/>
-      <file href="brand/jam-training-white.png"/>
+      <file href="brand/fonts/Ubuntu-Light.ttf"/>
+      <file href="brand/fonts/Ubuntu-Medium.ttf"/>
+      <file href="brand/fonts/Ubuntu-Regular.ttf"/>
       <file href="captions/smp61-v01-objectives.ar.vtt"/>
       <file href="captions/smp61-v01-objectives.en.vtt"/>
       <file href="captions/smp61-v02-ibrox.ar.vtt"/>
@@ -45,6 +45,8 @@
       <file href="captions/smp61-v09-vomitory12.en.vtt"/>
       <file href="fonts/CREDITS.txt"/>
       <file href="fonts/TwemojiCountryFlags.woff2"/>
+      <file href="icons/client-sign-exit.png"/>
+      <file href="icons/client-sign-gate.png"/>
       <file href="icons/custom-walkie-talkie.svg"/>
       <file href="icons/fluent-3d-books.png"/>
       <file href="icons/fluent-3d-busts-in-silhouette.png"/>
@@ -62,6 +64,7 @@
       <file href="icons/fluent-3d-metro.png"/>
       <file href="icons/fluent-3d-no-entry.png"/>
       <file href="icons/fluent-3d-open-hands.png"/>
+      <file href="icons/fluent-3d-page-facing-up.png"/>
       <file href="icons/fluent-3d-party-popper.png"/>
       <file href="icons/fluent-3d-red-question-mark.png"/>
       <file href="icons/fluent-3d-right-arrow.png"/>
@@ -122,7 +125,15 @@
       <file href="images/smp61-s55-hb-gate-open.jpg"/>
       <file href="images/smp61-s56-hb-tunnel.jpg"/>
       <file href="images/smp61-s57-hb-side-pens.jpg"/>
+      <file href="images/smp61-s58-basra-dawn.jpg"/>
+      <file href="images/smp61-s59-basra-stay.jpg"/>
       <file href="images/smp61-s6-busy.jpg"/>
+      <file href="images/smp61-s60-basra-push.jpg"/>
+      <file href="images/smp61-s61-wembley-approach.jpg"/>
+      <file href="images/smp61-s62-wembley-breach.jpg"/>
+      <file href="images/smp61-s63-wembley-surge.jpg"/>
+      <file href="images/smp61-s64-wembley-waiting.jpg"/>
+      <file href="images/smp61-s65-wembley-stewards.jpg"/>
       <file href="images/smp61-s7-getting-full.jpg"/>
       <file href="images/smp61-s8-at-capacity.jpg"/>
       <file href="images/smp61-s9-cutaway.jpg"/>
@@ -133,19 +144,14 @@
       <file href="images/smp61-thumb-8.jpg"/>
       <file href="scorm.js"/>
       <file href="video/smp61-v01-objectives.mp4"/>
-      <file href="video/smp61-v02-ibrox.mp4"/>
-      <file href="video/smp61-v03-hillsborough.mp4"/>
-      <file href="video/smp61-v04-crowd-rules.mp4"/>
       <file href="video/smp61-v05-narrow-gate.mp4"/>
-      <file href="video/smp61-v06-shockwave.mp4"/>
-      <file href="video/smp61-v07-danger-signs.mp4"/>
       <file href="video/smp61-v08-attention.mp4"/>
       <file href="video/smp61-v09-vomitory12.mp4"/>
       <file href="video/smp61-v10-dp1.mp4"/>
       <file href="video/smp61-v11-dp2.mp4"/>
       <file href="video/smp61-v12-dp3.mp4"/>
-      <file href="aids/smp61-crowd-safety-matters-job-aids.pdf"/>
       <file href="aids/smp61-eyes-on-the-crowd.pdf"/>
+      <file href="aids/SMP61-Why-crowd-safety-matters-density-danger-signs-and-surge-moments-job-aids.pdf"/>
     </resource>
   </resources>
 </manifest>
