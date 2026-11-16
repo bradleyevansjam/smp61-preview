@@ -912,6 +912,8 @@
   .srconf{margin-top:4px}.srrow.srflag{border-inline-start-color:var(--orange)}.srflagline{margin-top:4px;font-weight:700}
   .streak{display:inline-block;margin-inline-start:8px;padding:2px 9px;border-radius:12px;background:var(--teal-tint);color:var(--teal);letter-spacing:0;font-size:11.5px;text-transform:none}
   .jlist{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+  .jpgtop{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px} .jpages{display:flex;flex-direction:column;gap:10px;margin-bottom:16px} .jpages h3{margin:0} .jpage{display:block;width:100%;height:auto;border:1px solid var(--line-2);border-radius:6px;background:#fff}
+  @media print{.jpages .jpage{border:0;border-radius:0;break-after:page;page-break-after:always}}
   .jitem{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid var(--line-2);border-radius:12px;padding:12px 14px;text-decoration:none;color:var(--ink)}
   .jitem .ico{width:34px;height:34px;display:inline-flex;flex:none} .jitem span{flex:1} .jitem b{display:block;color:var(--navy);font-size:14.5px} .jitem small{color:var(--faint);font-size:11.5px}
   .jitem i{font-style:normal;font-size:20px;color:var(--blue)}
@@ -1290,13 +1292,14 @@ details.transcript p{margin:6px 0;line-height:1.55}
 .grp-h{margin:0 0 12px;text-align:center;font-weight:700;color:var(--blue)}.grp-h span{font-weight:400}
 .grp-big{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;text-align:center}
 .grp-item .ico{width:76px;height:76px;max-width:100%;display:inline-flex}.grp-item .ico img{width:100%;height:100%;border-radius:50%;box-shadow:0 0 0 1px var(--line)}
-.grp-item b{display:block;margin-top:6px;font-size:15px;line-height:1.3;color:var(--navy)}
+/* flags only, no names under them (user, 2026-11-16: some flags carry writing, others not - no extra text); the name stays for screen readers */
+.grp-item b{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .grp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .grp-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;font:inherit}
 .grp-card.on{border-color:var(--blue);background:var(--sky-tint)}.grp-card:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
 .grp-t{font-weight:700;font-size:14px;color:var(--blue)}.grp-card.seen:not(.on) .grp-t::after{content:' \2713'}
 .grp-mini{display:flex;gap:3px}.grp-mini .ico{width:22px;height:22px;display:inline-flex}.grp-mini .ico img{width:100%;height:100%;border-radius:50%}
-@media (max-width:420px){.grp-item .ico{width:58px;height:58px}.grp-item b{font-size:13px}.grp-mini .ico{width:17px;height:17px}}
+@media (max-width:420px){.grp-item .ico{width:58px;height:58px}.grp-mini .ico{width:17px;height:17px}}
 .cmp-pane{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--surface-2)}
 .cmp-h{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-family:var(--font-display);font-size:20px;color:var(--navy)}.cmp-h .ico{width:36px;height:36px;display:inline-flex}
 .cmp-row{display:flex;gap:14px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.cmp-row:first-of-type{border-top:0}
@@ -2167,6 +2170,8 @@ function watchAttrs(){cleanAttrs(document.body);if(!window.MutationObserver)retu
 function applyLang(){
   document.documentElement.lang=LANG;document.documentElement.dir=RTL[LANG]?'rtl':'ltr';
   try{localStorage.setItem('ck-lang',LANG);localStorage.setItem('ck-lang-'+COURSE.id,LANG);}catch(e){}
+  /* the browser tab shows the lesson title in the learner's language (review 2026-11-16: English left on an Arabic page) */
+  try{var mt=(typeof SCRIPT!=='undefined'&&SCRIPT.module&&SCRIPT.module.title)||COURSE.title;var tt=strip(T(mt));if(tt)document.title=tt;}catch(e){}
   /* a translated string keeps the <bdi> marks T() adds around Latin words in Arabic: write it as HTML (rich()), never as
      textContent, or the marks show as text ('<bdi>DIM</bdi>-<bdi>ICE</bdi>' in a title bar, 2026-11-09) */
   var m=g('mTitle');if(m)rich(m,T(COURSE.titleI18n||COURSE.title));
@@ -2232,14 +2237,34 @@ function openFile(url){
   if(w){try{w.opener=null;}catch(e){}return true;}
   if(window.console)console.warn('mozapp: the LMS frame blocked a new tab (needs allow-popups / allow-downloads): job aids shown in the course');
   var d=g('jobDlg');if(d&&d.hidden)openJobAids();
+  if(/\.pdf$/i.test(String(url).split('?')[0]))showPdfPages(url);   /* review 2026-11-16 ('downloads, all lessons'): a blocked PDF is shown in the course, page by page */
   return false;
 }
+/* The pages of a job-aid PDF as pictures inside the Job aids panel (build.py writes aids/<name>-pages/p1.jpg, p2.jpg ...): works in
+   any LMS frame, needs no new tab and no download. Print prints only these pages. */
+function showPdfPages(url){
+  var d=g('jobDlg');if(!d)return;var body=d.querySelector('.jbody');if(!body)return;
+  var file=String(url).split('?')[0],base=file.replace(/\.pdf$/i,'')+'-pages/p';
+  var it=null;(COURSE.jobAids||[]).forEach(function(j){if(j.file===file)it=j;});
+  var p1=new Image();p1.onerror=function(){};   /* no page pictures: the panel stays as it is (its in-course cards) */
+  p1.onload=function(){
+    body.innerHTML='';var top=el('<div class="jpgtop"><button type="button" class="btn ghost jpgback">'+ARW('back')+' '+U('back')+'</button><button type="button" class="btn ghost jpgprint">'+U('printAids')+'</button></div>');
+    var box=el('<div class="jpages printonly">'+(it?'<h3>'+T(it.title)+'</h3>':'')+'</div>');body.appendChild(top);body.appendChild(box);
+    top.querySelector('.jpgback').addEventListener('click',function(){openJobAids();});
+    top.querySelector('.jpgprint').addEventListener('click',function(){try{window.print();}catch(e){}});
+    var n=1;(function add(im){im.alt=(it?strip(T(it.title))+' - ':'')+n;im.className='jpage';box.appendChild(im);n++;
+      var nx=new Image();nx.onload=function(){add(nx);};nx.onerror=function(){};nx.src=base+n+'.jpg';})(p1);
+    try{body.scrollTop=0;}catch(e){}
+  };
+  p1.src=base+'1.jpg';
+}
+
 document.addEventListener('click',function(e){var a=e.target&&e.target.closest?e.target.closest('a[data-file]'):null;if(!a)return;e.preventDefault();openFile(a.getAttribute('href'));});
 /* Job aids panel — downloadable PDFs listed in COURSE.jobAids [{title:{en,ar}, file, size}] */
 function openJobAids(){
   var d=g('jobDlg');if(!d)return;var list=COURSE.jobAids||[];
   rich(d.querySelector('#jobTitle'),U('jobAids'));
-  d.querySelector('.jbody').innerHTML=list.length?'<p class="jnote">'+U('jobAidsNote')+'</p><div class="jlist">'+list.map(function(j){return '<a class="jitem" href="'+j.file+'" data-file>'+icon('_doc')+'<span><b>'+T(j.title)+'</b>'+(j.size?'<small>'+j.size+'</small>':'')+'</span><i aria-hidden="true">⤓</i></a>';}).join('')+'</div>'
+  d.querySelector('.jbody').innerHTML=list.length?'<p class="jnote">'+U('jobAidsNote')+'</p><div class="jlist">'+list.map(function(j){return '<a class="jitem" href="'+j.file+(j.page?'?lang='+LANG:'')+'" data-file>'+icon('_doc')+'<span><b>'+T(j.title)+'</b>'+(j.size?'<small>'+j.size+'</small>':'')+'</span><i aria-hidden="true">⤓</i></a>';}).join('')+'</div>'
     :'<div class="mediaph missing"><span class="mpi">📎</span><b>'+U('noJobAids')+'</b></div>';
   rich(d.querySelector('.jclose'),U('close'));d.hidden=false;g('app').setAttribute('aria-hidden','true');
   d.querySelector('.jclose').focus({preventScroll:true});d.querySelector('.hpanel').scrollTop=0;
@@ -3574,7 +3599,7 @@ Object.assign(BUILD,{
         if(s.reportToLms!==false)reportScore(Q.best,Q.passed,results);
         saveNow();   // the result is kept even if the learner closes the window on this screen
         h.innerHTML='<div class="kicker">'+T(s.kicker)+'</div><h2>'+(passed?U('quizPassed'):U('quizNotYet'))+'</h2>';
-        h.appendChild(scorecardPct(pct,passed,pass,U('quizScoreLabel',{r:right,n:count}),passed?T(s.passText)||U('quizPassText'):(scMiss&&pct>=pass?U('quizSafetyMissed'):T(s.failText)||U('quizFailText',{p:pass,k:need,n:count})),right,count));
+        h.appendChild(scorecardPct(pct,passed,pass,U('quizScoreLabel',{r:right,n:count}),passed?T(s.passText)||U('quizPassText'):(scMiss&&pct>=pass?U('quizSafetyMissed'):T(s.failText)||U('quizFailText',{p:pass,k:need,n:count})),right,count,!!s.safetyMustPass));
         if(passed)actions(h).appendChild(contBtn(T(s['continue'])||U('cont'),function(){awardXp(s.id,s.xp&&s.xp.complete);next();}));
         else{
           var r=s.retries,canRetry=(r===undefined||r===null||r==='unlimited'||Q.attempt<=Number(r));   // retries = re-attempts allowed
@@ -3671,9 +3696,9 @@ Object.assign(BUILD,{
 });
 
 /* scorecard with an arbitrary pass mark (module quizzes) */
-function scorecardPct(pct,passed,pass,label,msg,right,count){
+function scorecardPct(pct,passed,pass,label,msg,right,count,safety){
   /* counts, not percentages, when the counts are known ("7 out of 10") */
-  var big=count?right+'<span> / '+count+'</span>':pct+'<span>%</span>',need=count?U('neededOf',{k:Math.ceil(count*pass/100),n:count}):U('passMark')+' '+(COURSE.passDisplay?T(COURSE.passDisplay):pass+'%');   /* "4 of 5 needed", not "pass mark 70% (4 / 5)" (user, 2026-10-14) */
+  var big=count?right+'<span> / '+count+'</span>':pct+'<span>%</span>',need=count?U(safety?'quizRulesSafety':'neededOf',{k:Math.ceil(count*pass/100),n:count}):U('passMark')+' '+(COURSE.passDisplay?T(COURSE.passDisplay):pass+'%');   /* "4 of 5 needed", not "pass mark 70% (4 / 5)" (user, 2026-10-14); with must-pass Safety questions the full rule (review 2026-11-16: '4/5 failed once, passed later') */
   return el('<div class="scorecard '+(passed?'pass':'fail')+'"><div class="sn">'+big+'</div><div class="sl">'+label+'</div>'+
     '<div class="sbar"><i style="width:'+pct+'%"></i><span class="mark" style="left:'+pass+'%"></span></div><div class="spass">'+need+'</div>'+
     '<div class="verdict">'+(passed?U('pass'):U('notYetVerdict'))+'</div><div class="sm">'+msg+'</div></div>');
@@ -4994,8 +5019,11 @@ Object.assign(BUILD,{
     timers.push(setInterval(function(){if(v.paused||v.ended){still=0;return;}if(v.currentTime===lastT){if(++still>=6)stalled=true;}else{still=0;stalled=false;}lastT=v.currentTime;},1000));
     function next(){for(var k=0;k<M.length;k++)if(!got[k])return k;return -1;}
     function usable(){return !stalled&&!v.error&&v.readyState>=2;}
+    /* A moment asked for without a Mark in its window (clip ended, stalled) is pinned and shown at its OWN time, never at the clip end
+       (review 2026-11-16: 'Moment 1 at 0:24' sat over a frame that did not show it). */
+    function at(i){var m=M[i];if(!m)return v.currentTime;var tt=Math.min(dur(),(m.from+m.to)/2);try{v.pause();v.currentTime=tt;}catch(e){}return tt;}
     v.addEventListener('error',function(){btn.disabled=false;});
-    v.addEventListener('ended',function(){var left=M.length-Object.keys(got).length;if(left){fbHost.innerHTML='';fbHost.appendChild(fb('tip',U('clipEnded'),U('foundSoFar',{a:M.length-left,b:M.length})));svin(fbHost);if(!asking)ask(next(),v.currentTime);}});
+    v.addEventListener('ended',function(){var left=M.length-Object.keys(got).length;if(left){fbHost.innerHTML='';fbHost.appendChild(fb('tip',U('clipEnded'),U('foundSoFar',{a:M.length-left,b:M.length})));svin(fbHost);if(!asking)ask(next(),at(next()));}});
     ctl.querySelector('.mm-pp').addEventListener('click',pp);
     ctl.querySelector('.mm-back').addEventListener('click',function(){v.currentTime=Math.max(0,v.currentTime-5);});
     tl.addEventListener('click',function(e){var r=tl.getBoundingClientRect();v.currentTime=(e.clientX-r.left)/r.width*dur();});
@@ -5003,7 +5031,7 @@ Object.assign(BUILD,{
     ctl.querySelector('.mm-mark').addEventListener('click',function(){
       if(asking)return;var t=v.currentTime,i=-1;M.forEach(function(m,k){if(i<0&&!got[k]&&t>=m.from&&t<=m.to)i=k;});
       v.pause();fbHost.innerHTML='';
-      if(i<0&&(v.ended||!usable()))i=next();
+      if(i<0&&(v.ended||!usable())){i=next();if(i>=0)t=at(i);}
       if(i<0){first=false;pin(t,false,'?');fbHost.appendChild(fb('tip',U('notThisMoment'),T(X(s,'wrongMark'))||U('keepWatching',{t:fmt(t)})));svin(fbHost);return;}
       ask(i,t);
     });
@@ -5016,7 +5044,7 @@ Object.assign(BUILD,{
           if(o.correct){got[i]=1;asking=false;box.remove();var row=list.querySelector('.mm-row[data-i="'+i+'"]');row.classList.add('ok');
             row.lastChild.innerHTML=U('momentAt',{n:i+1,t:fmt(t)})+' <b>'+T(o.text)+'</b>';fbHost.innerHTML='';fbHost.appendChild(fb('good',U('spotOn'),T(m.feedback)||''));svin(fbHost);
             if(Object.keys(got).length===M.length){ctl.querySelector('.mm-mark').disabled=true;if(first)awardXp(s.id+':ftc',s.xp&&s.xp.firstTimeCorrect);btn.disabled=false;prTake(s,h);}
-            else if(v.ended||!usable())ask(next(),v.currentTime);}
+            else if(v.ended||!usable())ask(next(),at(next()));}
           else{first=false;b.classList.add('no');b.disabled=true;b.insertAdjacentHTML('beforeend','<span class="mm-x" aria-hidden="true">✕</span>');}
         });box.querySelector('.mm-opts').appendChild(b);});
       fbHost.appendChild(box);svin(fbHost);
